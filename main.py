@@ -44,5 +44,37 @@ def main_estoque():
     elif escolha == "0":
         print("👋 Volte sempre! =)")
 
+def cadastro_item():
+    proximo_id = 1
+    limpa_tela()
+    nome = input_nao_vazio("Digite o nome do item:\n-> ")
+    while True:
+        quantidade = int(input_nao_vazio("Quantidade do item:\n-> ").strip())
+        try:
+            if quantidade <= 0:
+                raise ValueError("deve ser maior que zero")
+
+        except ValueError as e:
+            print(f"⚠️ Quantidade inválida ({e}). Tente novamente.\n")
+        else:
+            break
+    
+    itens[proximo_id] = {"nome": nome, "quantidade": quantidade}
+    print(f"✅ Item cadastrado: ID {proximo_id} → {nome} (Qtd: {quantidade})")
+    
+    retorna_menu()
+    proximo_id += 1
+    return proximo_id - 1
+
+def listar_item():
+    if itens:
+        print("\nItens cadastrados:")
+        print(f"{'ID':>3}  {'Nome':<20}  {'Qtd':>5}")
+        print("-" * 32)
+        for id_, dados in itens.items():
+            print(f"{id_:>3}  {dados['nome']:<20}  {dados['quantidade']:>5}")
+    else:
+        print("⛔ Nenhum item cadastrado ainda.")
+
 if __name__ == "__main__":
     main_estoque()
