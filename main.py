@@ -13,8 +13,21 @@ def forca_opcao(lista, mensagem):
             print("⚠️  Escolha inválida")
         else:
             return escolha
+     
+def input_nao_vazio(mensagem):
+    while True:
+        variavel = input(mensagem)
+        if variavel == "":
+            print(f"⚠️ Texto não pode ser vazio")
+        else:
+            return variavel
+
+def retorna_menu():
+    input("\n\n◀️ Insira qualquer valor para voltar ao menu!")
+    main_estoque()
 
 def main_estoque():
+    limpa_tela()
     opc_menu = ['1', '2', '0']
 
     print('''
