@@ -26,15 +26,20 @@ def retorna_menu():
     input("\n\n◀️ Insira qualquer valor para voltar ao menu!")
     main_estoque()
 
+# -------------- FUNÇÕES DE SISTEMA -------------- # 
+
 def main_estoque():
     limpa_tela()
-    opc_menu = ['1', '2', '0']
+    opc_menu = ['1','2','0']
 
+    print("-=" * 17)
     print('''
-        1) Cadastrar utensílio
-        2) Listar utensílios
-        0) Sair\n
+        1) Cadastrar item
+        2) Listar item
+        3) Descontar item
+        0) Sair
     ''')
+    print("-=" * 17 + "\n")
 
     escolha = forca_opcao(opc_menu, 'Qual opção o usuário deseja acessar?:\n-> ')
     if escolha == "1":
@@ -45,7 +50,6 @@ def main_estoque():
         print("👋 Volte sempre! =)")
 
 def cadastro_item():
-    proximo_id = 1
     limpa_tela()
     nome = input_nao_vazio("Digite o nome do item:\n-> ")
     while True:
@@ -59,22 +63,23 @@ def cadastro_item():
         else:
             break
     
-    itens[proximo_id] = {"nome": nome, "quantidade": quantidade}
-    print(f"✅ Item cadastrado: ID {proximo_id} → {nome} (Qtd: {quantidade})")
-    
+    novo_id = len(itens) + 1
+    itens[novo_id] = {"nome": nome, "quantidade": quantidade}
+    print(f"✅ Item cadastrado: ID {novo_id} → {nome} (Qtd: {quantidade})")
     retorna_menu()
-    proximo_id += 1
-    return proximo_id - 1
 
 def listar_item():
+    limpa_tela()
     if itens:
         print("\nItens cadastrados:")
         print(f"{'ID':>3}  {'Nome':<20}  {'Qtd':>5}")
         print("-" * 32)
         for id_, dados in itens.items():
             print(f"{id_:>3}  {dados['nome']:<20}  {dados['quantidade']:>5}")
+        retorna_menu()
     else:
         print("⛔ Nenhum item cadastrado ainda.")
+        retorna_menu()
 
 if __name__ == "__main__":
     main_estoque()
