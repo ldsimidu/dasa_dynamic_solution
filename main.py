@@ -1,6 +1,8 @@
 import os
+import datetime
 
 itens = {}
+dia_hoje = datetime.date.today()
 
 def limpa_tela():
     comando = 'cls' if os.name == 'nt' else 'clear'
@@ -26,6 +28,16 @@ def retorna_menu():
     input("\n\n◀️ Insira qualquer valor para voltar ao menu!")
     main_estoque()
 
+def listar_itens():
+    if itens:
+        print("\nItens cadastrados:")
+        print(f"{'ID':>3}  {'Nome':<20}  {'Qtd':>5}   {'Val':>10}")
+        print("-" * 50)
+        for id_, dados in itens.items():
+            val_str = dados['validade'].strftime("%d/%m/%Y")
+            print(f"{id_:>3}  {dados['nome']:<20}  {dados['quantidade']:>5}   {val_str:>10}")
+        print("-" * 50)    
+
 # -------------- FUNÇÕES DE SISTEMA -------------- # 
 
 def main_estoque():
@@ -37,6 +49,7 @@ def main_estoque():
         1) Cadastrar item
         2) Listar item
         3) Descontar item
+        4) Comprar itens
         0) Sair
     ''')
     print("-=" * 17 + "\n")
@@ -45,7 +58,7 @@ def main_estoque():
     if escolha == "1":
         cadastro_item()
     elif escolha == "2":
-        listar_item()
+        listar_item_cadastrados()
     elif escolha == "3":
         desconto()
     elif escolha == "0":
@@ -64,20 +77,27 @@ def cadastro_item():
         else:
             break
     
+    while True:
+        s = input_nao_vazio("Validade do item (DD/MM/YYYY):\n-> ").strip()
+        try:
+            validade = datetime.datetime.strptime(s, "%d/%m/%Y").date()
+        except ValueError:
+            print("⚠️  Formato inválido. Use DD/MM/YYYY.")
+            continue
+        if validade < dia_hoje:
+            print("⚠️  Validade menor que o dia atual.")
+        else:
+            break
+
     novo_id = len(itens) + 1
-    itens[novo_id] = {"nome": nome, "quantidade": quantidade}
-    print(f"✅ Item cadastrado: ID {novo_id} → {nome} (Qtd: {quantidade})")
+    itens[novo_id] = {"nome": nome, "quantidade": quantidade, "validade": validade}
+    print(f"✅ Item cadastrado: ID {novo_id} → {nome} (Qtd: {quantidade} / Val: {validade.strftime('%d/%m/%Y')})")
     retorna_menu()
 
-def listar_item():
+def listar_item_cadastrados():
     limpa_tela()
     if itens:
-        print("\nItens cadastrados:")
-        print(f"{'ID':>3}  {'Nome':<20}  {'Qtd':>5}")
-        print("-" * 32)
-        for id_, dados in itens.items():
-            print(f"{id_:>3}  {dados['nome']:<20}  {dados['quantidade']:>5}")
-        print("-" * 32)
+        listar_itens()
         retorna_menu()
     else:
         print("⛔ Nenhum item cadastrado ainda.")
@@ -85,16 +105,7 @@ def listar_item():
 
 def desconto():
     limpa_tela()
-    if not itens:
-        print("⛔ Nenhum item cadastrado ainda.")
-        retorna_menu()
-
-    print("\nItens cadastrados:")
-    print(f"{'ID':>3}  {'Nome':<20}  {'Qtd':>5}")
-    print("-" * 32)
-    for id_, dados in itens.items():
-        print(f"{id_:>3}  {dados['nome']:<20}  {dados['quantidade']:>5}")
-    print("-" * 32)
+    listar_itens()
     print('''
           0) ◀️ Voltar
           ''')
@@ -137,7 +148,6 @@ def desconto():
     print(f"\n✅ Descontados {qtd_usar} unidade(s) de ID {id_escolhido} → {nome_item}.")
     print(f"   Quantidade restante: {restante}")
     retorna_menu()
-
 
 if __name__ == "__main__":
     main_estoque()
