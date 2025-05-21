@@ -42,7 +42,8 @@ def listar_itens():
 
 def main_estoque():
     limpa_tela()
-    opc_menu = ['1','2','3','0']
+    print(itens)
+    opc_menu = ['1','2','3','4','0']
 
     print("-=" * 17)
     print('''
@@ -61,6 +62,8 @@ def main_estoque():
         listar_item_cadastrados()
     elif escolha == "3":
         desconto()
+    elif escolha == "4":
+        compra()
     elif escolha == "0":
         print("👋 Volte sempre! =)")
 
@@ -115,11 +118,11 @@ def desconto():
             id_escolhido = int(input_nao_vazio("Digite o ID do item que deseja usar:\n-> "))
             if id_escolhido == 0:
                 retorna_menu()
-            if id_escolhido not in itens:
+            elif id_escolhido not in itens:
                 raise KeyError("ID não existe")
-            if itens[id_escolhido]["quantidade"] == 0:
+            elif itens[id_escolhido]["quantidade"] == 0:
                 raise ValueError("sem estoque disponível")
-        except ValueError as e:
+        except ValueError or KeyError as e:
             print(f"⚠️ Não é possível usar este item ({e}). Escolha outro.\n")
         except KeyError as e:
             print(f"⚠️ Escolha inválida ({e}). Tente novamente.\n")
@@ -136,7 +139,7 @@ def desconto():
             ))
             if qtd_usar <= 0:
                 raise ValueError("deve ser maior que zero")
-            if qtd_usar > qtd_disponivel:
+            elif qtd_usar > qtd_disponivel:
                 raise ValueError("maior que o disponível")
         except ValueError as e:
             print(f"⚠️ Quantidade inválida ({e}). Tente novamente.\n")
@@ -147,6 +150,48 @@ def desconto():
     restante = itens[id_escolhido]["quantidade"]
     print(f"\n✅ Descontados {qtd_usar} unidade(s) de ID {id_escolhido} → {nome_item}.")
     print(f"   Quantidade restante: {restante}")
+    retorna_menu()
+
+def compra():
+    limpa_tela()
+    if not itens:
+        print("⛔ Nenhum item cadastrado ainda.")
+        retorna_menu()
+
+    listar_itens()
+    print('''0) ◀️ Voltar''')
+
+    while True:
+        try:
+            id_escolhido = int(input_nao_vazio("Digite o ID do item que deseja comprar (repor):\n-> "))
+            if id_escolhido == 0:
+                return retorna_menu()
+            if id_escolhido not in itens:
+                raise KeyError("ID não existe")
+        except (ValueError, KeyError) as e:
+            print(f"⚠️ Escolha inválida ({e}). Tente novamente.\n")
+        else:
+            break
+
+    nome_item = itens[id_escolhido]["nome"]
+    qtd_atual = itens[id_escolhido]["quantidade"]
+
+    while True:
+        try:
+            qtd_compra = int(input_nao_vazio(
+                f"Quantas unidades de '{nome_item}' você quer comprar? (Atualmente: {qtd_atual})\n-> "
+            ))
+            if qtd_compra <= 0:
+                raise ValueError("deve ser maior que zero")
+        except ValueError as e:
+            print(f"⚠️ Quantidade inválida ({e}). Tente novamente.\n")
+        else:
+            break
+
+    itens[id_escolhido]["quantidade"] += qtd_compra
+    novo_total = itens[id_escolhido]["quantidade"]
+    print(f"\n✅ Repostos {qtd_compra} unidade(s) de ID {id_escolhido} → {nome_item}.")
+    print(f"   Novo total em estoque: {novo_total}")
     retorna_menu()
 
 if __name__ == "__main__":
