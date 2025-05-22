@@ -139,4 +139,78 @@ class ControleDeEstoque(unittest.TestCase):
         esperado = 5*1.5 + 10*0.5 + 8*2.0 + 20*0.75 + 50*0.2 + 30*0.1
         self.assertAlmostEqual(total, esperado)
 
+if __name__ == '__main__':
+    itens_demo = {}
+    hoje = datetime.date(2025, 5, 22)
+    exemplos = [
+        {'id': 1, 
+         'nome': 'Seringa',
+         'quantidade': 5,  
+         'validade': datetime.date(2025, 5, 25), 
+         'preco': 1.5,  
+         'fornecedor': 'DASA',      
+         'categoria': 'Medicina'},
 
+        {'id': 2, 
+         'nome': 'Algodão',           
+         'quantidade': 10, 
+         'validade': datetime.date(2025, 5, 20), 
+         'preco': 0.5,  
+         'fornecedor': 'Saúde+',    
+         'categoria': 'Insumos'},
+
+        {'id': 3, 
+         'nome': 'Álcool',            
+         'quantidade': 8,  
+         'validade': datetime.date(2025, 6, 1), 
+         'preco': 2.0,  'fornecedor': 'LabCorp',   
+         'categoria': 'Limpeza'},
+
+        {'id': 4, 
+         'nome': 'Máscara',
+         'quantidade': 20, 
+         'validade': datetime.date(2025, 7, 1),  
+         'preco': 0.75, 
+         'fornecedor': 'MedPlus',   
+         'categoria': 'Proteção'},
+
+        {'id': 5, 
+         'nome': 'Luvas Cirúrgicas',  
+         'quantidade': 50, 
+         'validade': datetime.date(2025, 4, 30),
+         'preco': 0.2,  
+         'fornecedor': 'SafeHands', 
+         'categoria': 'Proteção'},
+
+        {'id': 6, 
+         'nome': 'Gaze',              
+         'quantidade': 30, 
+         'validade': datetime.date(2025, 5, 30),
+         'preco': 0.1,  
+         'fornecedor': 'Saúde+',    
+         'categoria': 'Insumos'},
+    ]
+
+    for item in exemplos:
+        adicionar_item(itens_demo, item)
+
+    print("Itens cadastrados:")
+    for i in listar_itens(itens_demo):
+        print(f"- {i['nome']}: validade {i['validade'].strftime('%d/%m/%Y')}, qtd {i['quantidade']}")
+
+    print("\nOrdenados por validade:")
+    for i in ordenar_por_validade(itens_demo):
+        print(f"- {i['nome']}: {i['validade'].strftime('%d/%m/%Y')}")
+
+    print("\nItens vencidos:")
+    for i in filtrar_vencidos(itens_demo, hoje):
+        print(f"- {i['nome']} (vencido em {i['validade'].strftime('%d/%m/%Y')})")
+
+    print("\nPróximos a vencer em até 8 dias:")
+    for i in proximos_a_vencer(itens_demo, 8, hoje):
+        dias = dias_para_vencimento(i, hoje)
+        print(f"- {i['nome']}: em {dias} dias (válido até {i['validade'].strftime('%d/%m/%Y')})")
+
+    print(f"\nValor total do estoque: R$ {valor_total(itens_demo):.2f}\n")
+
+    unittest.main()
