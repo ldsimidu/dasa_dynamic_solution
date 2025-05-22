@@ -8,6 +8,50 @@ def adicionar_item(itens: dict, item: dict) -> None:
     """
     itens[item['id']] = item
 
+
+def listar_itens(itens: dict) -> list:
+    """Retorna a lista de itens cadastrados."""
+    return list(itens.values())
+
+
+def ordenar_por_validade(itens: dict, reverse: bool = False) -> list:
+    items_list = list(itens.values())
+    for i in range(1, len(items_list)):
+        key_item = items_list[i]
+        j = i - 1
+        while j >= 0 and items_list[j]['validade'] > key_item['validade']:
+            items_list[j + 1] = items_list[j]
+            j -= 1
+        items_list[j + 1] = key_item
+
+    if reverse:
+        return [items_list[i] for i in range(len(items_list) - 1, -1, -1)]
+    return items_list
+
+
+def filtrar_vencidos(itens: dict, hoje: datetime.date = None) -> list:
+    """Retorna itens cuja validade já passou em relação a hoje."""
+    hoje = hoje or datetime.date.today()
+    return [i for i in itens.values() if i['validade'] < hoje]
+
+
+def dias_para_vencimento(item: dict, hoje: datetime.date = None) -> int:
+    """Retorna número de dias até o vencimento (negativo se já vencido)."""
+    hoje = hoje or datetime.date.today()
+    return (item['validade'] - hoje).days
+
+
+def proximos_a_vencer(itens: dict, dias: int, hoje: datetime.date = None) -> list:
+    """Retorna itens vencendo em até `dias` a partir de hoje."""
+    hoje = hoje or datetime.date.today()
+    return [i for i in itens.values() if 0 <= dias_para_vencimento(i, hoje) <= dias]
+
+
+def valor_total(itens: dict) -> float:
+    """Calcula o valor total do estoque (preco * quantidade)."""
+    return sum(i['preco'] * i['quantidade'] for i in itens.values())
+
+
 # --- Testes unitários --- #
 
 class ControleDeEstoque(unittest.TestCase):
@@ -67,3 +111,32 @@ class ControleDeEstoque(unittest.TestCase):
         self.hoje = hoje
         for item in exemplos:
             adicionar_item(self.itens, item)
+
+    def test_ordenacao_por_validade(self):
+        ordenados = ordenar_por_validade(self.itens)
+        datas = [i['validade'] for i in ordenados]
+        esperado = [datetime.date(2025, 4, 30), datetime.date(2025, 5, 20), datetime.date(2025, 5, 25), datetime.date(2025, 5, 30), datetime.date(2025, 6, 1), datetime.date(2025, 7, 1)]
+        self.assertEqual(datas, esperado)
+
+    def test_ordenacao_por_validade_reverse(self):
+        ordenados = ordenar_por_validade(self.itens, reverse=True)
+        datas = [i['validade'] for i in ordenados]
+        esperado = [datetime.date(2025, 7, 1), datetime.date(2025, 6, 1), datetime.date(2025, 5, 30), datetime.date(2025, 5, 25), datetime.date(2025, 5, 20), datetime.date(2025, 4, 30)]
+        self.assertEqual(datas, esperado)
+
+    def test_filtrar_vencidos(self):
+        vencidos = filtrar_vencidos(self.itens, self.hoje)
+        nomes = [i['nome'] for i in vencidos]
+        self.assertListEqual(nomes, ['Algodão', 'Luvas Cirúrgicas'])
+
+    def test_proximos_a_vencer(self):
+        proximos = proximos_a_vencer(self.itens, 8, self.hoje)
+        nomes = [i['nome'] for i in proximos]
+        self.assertListEqual(nomes, ['Seringa', 'Gaze'])
+
+    def test_valor_total(self):
+        total = valor_total(self.itens)
+        esperado = 5*1.5 + 10*0.5 + 8*2.0 + 20*0.75 + 50*0.2 + 30*0.1
+        self.assertAlmostEqual(total, esperado)
+
+
