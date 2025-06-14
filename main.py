@@ -109,6 +109,10 @@ def listar_item_cadastrados():
 def desconto():
     limpa_tela()
     listar_itens()
+    if not itens:
+        print("⛔ Nenhum item cadastrado ainda.")
+        retorna_menu()
+
     print('''
           0) ◀️ Voltar
           ''')
