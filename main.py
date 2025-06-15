@@ -1,7 +1,12 @@
 import os
 import datetime
 
-itens = {}
+estado = {
+    'itens': {},
+    'memo': {},
+    'itens_ordenados_validade': []
+}
+
 dia_hoje = datetime.date.today()
 
 def limpa_tela():
@@ -15,7 +20,7 @@ def forca_opcao(lista, mensagem):
             print("⚠️  Escolha inválida")
         else:
             return escolha
-     
+
 def input_nao_vazio(mensagem):
     while True:
         variavel = input(mensagem)
@@ -29,21 +34,78 @@ def retorna_menu():
     main_estoque()
 
 def listar_itens():
-    if itens:
+    if estado['itens']:
         print("\nItens cadastrados:")
         print(f"{'ID':>3}  {'Nome':<20}  {'Qtd':>5}   {'Val':>10}")
         print("-" * 50)
-        for id_, dados in itens.items():
+        for id_, dados in estado['itens'].items():
             val_str = dados['validade'].strftime("%d/%m/%Y")
             print(f"{id_:>3}  {dados['nome']:<20}  {dados['quantidade']:>5}   {val_str:>10}")
-        print("-" * 50)    
+        print("-" * 50)
 
 # -------------- FUNÇÕES DE SISTEMA -------------- # 
 
+def atualizar_lista_ordenada():
+    estado['itens_ordenados_validade'] = sorted(estado['itens'].items(), key=lambda x: x[1]['validade'])
+
+def estoque_total(ids=None):
+    if ids is None:
+        ids = list(estado['itens'].keys())
+    ids_tuple = tuple(ids)
+
+    if ids_tuple in estado['memo']:
+        return estado['memo'][ids_tuple]
+    if not ids:
+        return 0
+
+    primeiro = estado['itens'][ids[0]]['quantidade']
+    restante = estoque_total(ids[1:])
+    total = primeiro + restante
+    estado['memo'][ids_tuple] = total
+    return total
+
+def relatorio_estoque():
+    limpa_tela()
+    if not estado['itens']:
+        print("⛔ Nenhum item cadastrado ainda.")
+        return retorna_menu()
+
+    total_unidades = estoque_total()
+    zerados = [item for item in estado['itens'].values() if item['quantidade'] == 0]
+    proximos_vencimentos = [
+        (id_, item) for id_, item in estado['itens'].items()
+        if 0 <= (item['validade'] - dia_hoje).days <= 7
+    ]
+    quantidades = [item['quantidade'] for item in estado['itens'].values()]
+    maior = max(quantidades)
+    menor = min(quantidades)
+
+    print("📦 RELATÓRIO DE ESTOQUE")
+    print("-" * 50)
+    print(f"🔢 Total de unidades em estoque: {total_unidades}")
+    print(f"⚠️  Itens com quantidade zero: {len(zerados)}")
+    print(f"📅 Itens com validade nos próximos 7 dias: {len(proximos_vencimentos)}")
+    print(f"📈 Maior quantidade entre itens: {maior}")
+    print(f"📉 Menor quantidade entre itens: {menor}")
+    print("-" * 50)
+
+    if proximos_vencimentos:
+        print("\n📌 Vencimentos em breve:")
+        for id_, item in proximos_vencimentos:
+            dias = (item['validade'] - dia_hoje).days
+            print(f"  - ID {id_}: {item['nome']} (em {dias} dias)")
+
+    retorna_menu()
+
+def buscar_por_validade_linear(data_alvo):
+    for id_, dados in estado['itens'].items():
+        if dados['validade'] == data_alvo:
+            return id_, dados
+    return None
+
 def main_estoque():
     limpa_tela()
-    print(itens)
-    opc_menu = ['1','2','3','4','0']
+    opc_menu = ['1','2','3','4','5','0']
 
     print("-=" * 17)
     print('''
@@ -51,6 +113,7 @@ def main_estoque():
         2) Listar item
         3) Descontar item
         4) Comprar itens
+        5) Relatório de Estoque
         0) Sair
     ''')
     print("-=" * 17 + "\n")
@@ -64,6 +127,8 @@ def main_estoque():
         desconto()
     elif escolha == "4":
         compra()
+    elif escolha == "5":
+        relatorio_estoque()
     elif escolha == "0":
         print("👋 Volte sempre! =)")
 
@@ -79,7 +144,7 @@ def cadastro_item():
             print(f"⚠️ Quantidade inválida ({e}). Tente novamente.\n")
         else:
             break
-    
+
     while True:
         s = input_nao_vazio("Validade do item (DD/MM/YYYY):\n-> ").strip()
         try:
@@ -92,14 +157,16 @@ def cadastro_item():
         else:
             break
 
-    novo_id = len(itens) + 1
-    itens[novo_id] = {"nome": nome, "quantidade": quantidade, "validade": validade}
+    novo_id = len(estado['itens']) + 1
+    estado['itens'][novo_id] = {"nome": nome, "quantidade": quantidade, "validade": validade}
+    atualizar_lista_ordenada()
+    estado['memo'] = {} #zerando cache do memória
     print(f"✅ Item cadastrado: ID {novo_id} → {nome} (Qtd: {quantidade} / Val: {validade.strftime('%d/%m/%Y')})")
     retorna_menu()
 
 def listar_item_cadastrados():
     limpa_tela()
-    if itens:
+    if estado['itens']:
         listar_itens()
         retorna_menu()
     else:
@@ -109,7 +176,7 @@ def listar_item_cadastrados():
 def desconto():
     limpa_tela()
     listar_itens()
-    if not itens:
+    if not estado['itens']:
         print("⛔ Nenhum item cadastrado ainda.")
         retorna_menu()
 
@@ -122,19 +189,17 @@ def desconto():
             id_escolhido = int(input_nao_vazio("Digite o ID do item que deseja usar:\n-> "))
             if id_escolhido == 0:
                 retorna_menu()
-            elif id_escolhido not in itens:
+            elif id_escolhido not in estado['itens']:
                 raise KeyError("ID não existe")
-            elif itens[id_escolhido]["quantidade"] == 0:
+            elif estado['itens'][id_escolhido]["quantidade"] == 0:
                 raise ValueError("sem estoque disponível")
         except ValueError or KeyError as e:
             print(f"⚠️ Não é possível usar este item ({e}). Escolha outro.\n")
-        except KeyError as e:
-            print(f"⚠️ Escolha inválida ({e}). Tente novamente.\n")
         else:
             break
 
-    nome_item = itens[id_escolhido]["nome"]
-    qtd_disponivel = itens[id_escolhido]["quantidade"]
+    nome_item = estado['itens'][id_escolhido]["nome"]
+    qtd_disponivel = estado['itens'][id_escolhido]["quantidade"]
 
     while True:
         try:
@@ -150,15 +215,16 @@ def desconto():
         else:
             break
 
-    itens[id_escolhido]["quantidade"] -= qtd_usar
-    restante = itens[id_escolhido]["quantidade"]
+    estado['itens'][id_escolhido]["quantidade"] -= qtd_usar
+    estado['memo'] = {} #zerando cache do memória
+    restante = estado['itens'][id_escolhido]["quantidade"]
     print(f"\n✅ Descontados {qtd_usar} unidade(s) de ID {id_escolhido} → {nome_item}.")
     print(f"   Quantidade restante: {restante}")
     retorna_menu()
 
 def compra():
     limpa_tela()
-    if not itens:
+    if not estado['itens']:
         print("⛔ Nenhum item cadastrado ainda.")
         retorna_menu()
 
@@ -170,15 +236,15 @@ def compra():
             id_escolhido = int(input_nao_vazio("Digite o ID do item que deseja comprar (repor):\n-> "))
             if id_escolhido == 0:
                 return retorna_menu()
-            if id_escolhido not in itens:
+            if id_escolhido not in estado['itens']:
                 raise KeyError("ID não existe")
         except (ValueError, KeyError) as e:
             print(f"⚠️ Escolha inválida ({e}). Tente novamente.\n")
         else:
             break
 
-    nome_item = itens[id_escolhido]["nome"]
-    qtd_atual = itens[id_escolhido]["quantidade"]
+    nome_item = estado['itens'][id_escolhido]["nome"]
+    qtd_atual = estado['itens'][id_escolhido]["quantidade"]
 
     while True:
         try:
@@ -192,8 +258,10 @@ def compra():
         else:
             break
 
-    itens[id_escolhido]["quantidade"] += qtd_compra
-    novo_total = itens[id_escolhido]["quantidade"]
+    estado['itens'][id_escolhido]["quantidade"] += qtd_compra
+    atualizar_lista_ordenada()
+    estado['memo'] = {} #zerando cache do memória
+    novo_total = estado['itens'][id_escolhido]["quantidade"]
     print(f"\n✅ Repostos {qtd_compra} unidade(s) de ID {id_escolhido} → {nome_item}.")
     print(f"   Novo total em estoque: {novo_total}")
     retorna_menu()
