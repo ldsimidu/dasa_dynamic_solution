@@ -108,15 +108,6 @@ Esta seção descreve a eficiência computacional das funções implementadas no
 
 ---
 
-### ✅ Técnicas Aplicadas
-
-- **Programação dinâmica (memoization)** → `estoque_total`
-- **Ordenação eficiente (`TimSort`)** → `atualizar_lista_ordenada`
-- **Busca linear** → `buscar_por_validade_linear`
-- **Estrutura de dados eficiente (`dict`)** → acesso constante `O(1)`
-- **Separação de responsabilidades e validações** → menu, entradas, fluxo
-
----
 
 ### 🧠 Detalhes por Função
 
